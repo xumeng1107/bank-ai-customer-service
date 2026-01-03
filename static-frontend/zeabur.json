@@ -1,0 +1,14 @@
+{
+  "name": "bank-chatbot-frontend",
+  "version": "1.0.0",
+  "description": "银行智能客服前端界面",
+  "scripts": {
+    "start": "npx serve -s . -l 8080"
+  },
+  "dependencies": {
+    "serve": "^14.0.0"
+  },
+  "files": [
+    "index.html"
+  ]
+}
