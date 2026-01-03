@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from database import get_db, engine, Base
 from models import User, Account, Branch, Bill, Product
@@ -48,6 +50,15 @@ app.add_middleware(
     allow_methods=["*"],  # 允许所有HTTP方法
     allow_headers=["*"],  # 允许所有HTTP头
 )
+
+# 挂载静态文件服务到 /static 路径
+# 这允许访问静态资源，同时保持API路由的优先级
+app.mount("/static", StaticFiles(directory="static-frontend"), name="static")
+
+# 根路径返回前端页面
+@app.get("/")
+def serve_frontend():
+    return FileResponse("static-frontend/index.html")
 
 
 # 初始化模拟数据
