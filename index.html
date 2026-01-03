@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>银行智能客服</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 700px;
+        }
+        
+        /* 调整菜单栏背景颜色为蓝紫色 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* 增加上下文消息间隔 */
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            margin-bottom: 10px;
+            display: block;
+            clear: both;
+        }
+        
+        .bot-message {
+            background-color: #f0f2f5;
+            float: left;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        
+        /* 用户消息气泡背景颜色修改为渐变蓝色 */
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            float: right;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+            /* 消息气泡长度根据内容自适应 */
+            max-width: 80%;
+        }
+        
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 10px;
+            margin-left: 10px;
+            margin-bottom: 15px;
+            clear: both;
+        }
+        
+        .suggestion-btn {
+            background-color: #f0f4ff;
+            border: 1px solid #d1d9ff;
+            color: #667eea;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .suggestion-btn:hover {
+            background-color: #e0e7ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+            clear: both;
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* 通用卡片样式 */
+        .card {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e9edff 100%);
+            border: 1px solid #d1d9ff;
+            border-radius: 12px;
+            padding: 20px;
+            width: calc(33.333% - 10px);
+            min-width: 250px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 优化卡片在聊天背景中的分布 */
+        .chat-area .cards {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        /* 确保卡片容器占满聊天区域宽度 */
+        .chat-area .cards .card {
+            flex: 1;
+            min-width: calc(30% - 10px);
+            max-width: 350px;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card:hover {
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+            transform: translateY(-3px);
+        }
+        
+        .card h4 {
+            margin-bottom: 12px;
+            color: #667eea;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .card p {
+            font-size: 14px;
+            color: #595959;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        /* 产品卡片特殊样式 */
+        .card.product-card {
+            /* 产品卡片可以保持默认样式 */
+        }
+        
+        /* 网点卡片样式与产品卡片保持一致 */
+        .card.branch-card {
+            /* 移除特殊背景，使用默认卡片背景 */
+        }
+        
+        .card.branch-card::before {
+            /* 移除特殊顶部边框，使用默认样式 */
+        }
+        
+        .card.branch-card h4 {
+            /* 移除特殊标题颜色，使用默认颜色 */
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .card {
+                width: calc(50% - 10px);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .card {
+                width: 100%;
+            }
+        }
+        
+        /* 调整用户输入消息的对话框位置和发送按钮位置 */
+        .container .input-area {
+            display: flex;
+            padding: 15px 20px;
+            border-top: 1px solid #e8e8e8;
+            background-color: #fafafa;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            flex-wrap: nowrap;
+            box-sizing: border-box;
+        }
+        
+        .container .input-area #message-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 1px solid #d9d9d9;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            display: block;
+            max-width: none;
+            box-sizing: border-box;
+            min-width: 200px;
+        }
+        
+        .container .input-area #message-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+        
+        .container .input-area #send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 28px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100px;
+            display: block;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+        
+        #send-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* 添加打字动画 */
+        @keyframes typing {
+            0%, 20%, 100% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+        
+        /* 优化登录界面样式 */
+        .login-area {
+            padding: 60px 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        
+        .login-area h2 {
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        .login-area p {
+            margin-bottom: 30px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        #login-btn {
+            background-color: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        #login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header" style="position: relative;">
+            <h1>银行智能客服</h1>
+            <button id="logout-btn" style="position: absolute; top: 15px; right: 20px; background-color: white; color: #667eea; border: 1px solid #667eea; border-radius: 20px; padding: 8px 18px; cursor: pointer; font-size: 14px; font-weight: bold;">退出登录</button>
+        </div>
+        
+        <div class="login-area" id="login-area">
+            <h2>欢迎使用银行智能客服</h2>
+            <p>请点击下方按钮登录</p>
+            <button id="login-btn">登录（test用户）</button>
+        </div>
+        
+        <div class="chat-area" id="chat-area" style="display: none;">
+            <!-- 聊天消息将显示在这里 -->
+        </div>
+        
+        <div class="input-area" id="input-area" style="display: none;">
+            <input type="text" id="message-input" placeholder="请输入您的问题...">
+            <button id="send-btn">发送</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+        let isLoggedIn = false;
+        
+        // 登录功能
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_URL}/login/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    isLoggedIn = true;
+                    document.getElementById('login-area').style.display = 'none';
+                    document.getElementById('chat-area').style.display = 'block';
+                    document.getElementById('input-area').style.display = 'flex';
+                    document.getElementById('logout-btn').style.display = 'block';
+                    
+                    // 显示欢迎消息
+                    addMessage(data.message, 'bot');
+                    showSuggestions(data.suggestions);
+                } else {
+                    alert('登录失败：' + data.detail);
+                }
+            } catch (error) {
+                // 去掉控制台日志
+                alert('登录失败，请稍后重试');
+            }
+        });
+        
+        // 退出登录功能
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            isLoggedIn = false;
+            document.getElementById('login-area').style.display = 'block';
+            document.getElementById('chat-area').style.display = 'none';
+            document.getElementById('input-area').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'none';
+            // 清空聊天区域
+            document.getElementById('chat-area').innerHTML = '';
+        });
+        
+        // 初始隐藏退出登录按钮
+        document.getElementById('logout-btn').style.display = 'none';
+        
+        // 发送消息
+        document.getElementById('send-btn').addEventListener('click', sendMessage);
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // 添加等待状态显示函数
+        function showLoadingState() {
+            const chatArea = document.getElementById('chat-area');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loading-state';
+            loadingDiv.className = 'message bot-message';
+            loadingDiv.innerHTML = '<div style="display: flex; align-items: center; gap: 8px;"><span>小银思考中...</span><span style="animation: typing 1s infinite;">...</span></div>';
+            chatArea.appendChild(loadingDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        // 添加隐藏等待状态函数
+        function hideLoadingState() {
+            const loadingDiv = document.getElementById('loading-state');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || !isLoggedIn) return;
+            
+            // 显示用户消息
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // 显示等待状态
+            showLoadingState();
+            
+            try {
+                const response = await fetch(`${API_URL}/message`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'test',
+                        message: message
+                    })
+                });
+                
+                // 隐藏等待状态
+                hideLoadingState();
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // 显示机器人回复
+                    addMessage(data.message, 'bot');
+                    
+                    // 显示产品卡片
+                    if (data.products && data.products.length > 0) {
+                        showCards(data.products, 'product', data.has_more_products);
+                    }
+                    
+                    // 显示网点卡片
+                    if (data.branches && data.branches.length > 0) {
+                        showCards(data.branches, 'branch');
+                        // 添加额外提示信息
+                        addMessage('您可以点击上述卡片查看详情', 'bot');
+                    }
+                    
+                    // 显示建议
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        showSuggestions(data.suggestions);
+                    }
+                } else {
+                    addMessage('抱歉，我暂时无法回答您的问题，请稍后重试', 'bot');
+                }
+            } catch (error) {
+                // 隐藏等待状态
+                hideLoadingState();
+                // 去掉控制台日志
+                addMessage('网络错误，请稍后重试', 'bot');
+            }
+        }
+        
+        // 添加消息到聊天区域
+        function addMessage(text, type) {
+            const chatArea = document.getElementById('chat-area');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            // 将换行符转换为<br>标签，确保换行正确显示
+            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        // 显示建议按钮
+        function showSuggestions(suggestions) {
+            const chatArea = document.getElementById('chat-area');
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.className = 'suggestions';
+            
+            suggestions.forEach(suggestion => {
+                const btn = document.createElement('button');
+                btn.className = 'suggestion-btn';
+                btn.textContent = suggestion;
+                btn.addEventListener('click', () => {
+                    document.getElementById('message-input').value = suggestion;
+                    sendMessage();
+                });
+                suggestionsDiv.appendChild(btn);
+            });
+            
+            chatArea.appendChild(suggestionsDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        // 显示卡片
+        function showCards(items, type, hasMore = false) {
+            const chatArea = document.getElementById('chat-area');
+            const cardsDiv = document.createElement('div');
+            cardsDiv.className = 'cards';
+            
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                if (type === 'product') {
+                    // 添加product-card类以区分产品卡片
+                    card.className = 'card product-card';
+                    card.innerHTML = `
+                        <h4>${item.name}</h4>
+                        <p>${item.description}</p>
+                        <p><strong>风险等级：</strong>${item.risk_level}</p>
+                        <p><strong>年化收益率：</strong>${item.annual_rate}%</p>
+                        <p><strong>起购金额：</strong>${item.min_amount}元</p>
+                    `;
+                    card.addEventListener('click', async () => {
+                        try {
+                            const response = await fetch(`${API_URL}/products/${item.id}`);
+                            const productDetail = await response.json();
+                            // 使用换行符分隔信息，确保换行展示
+                            addMessage(`${productDetail.name}详情：\n${productDetail.description}\n风险等级：${productDetail.risk_level}\n年化收益率：${productDetail.annual_rate}%\n起购金额：${productDetail.min_amount}元`, 'bot');
+                        } catch (error) {
+                            // 去掉控制台日志
+                        }
+                    });
+                } else if (type === 'branch') {
+                    // 添加branch-card类以区分网点卡片
+                    card.className = 'card branch-card';
+                    card.innerHTML = `
+                        <h4>${item.name}</h4>
+                        <p><strong>地址：</strong>${item.address}</p>
+                        <p><strong>电话：</strong>${item.phone}</p>
+                    `;
+                    card.addEventListener('click', async () => {
+                        try {
+                            const response = await fetch(`${API_URL}/branches/${item.id}`);
+                            const branchDetail = await response.json();
+                            // 使用换行符分隔信息，确保换行展示
+                            addMessage(`${branchDetail.name}详情：\n地址：${branchDetail.address}\n电话：${branchDetail.phone}\n营业时间：${branchDetail.hours}`, 'bot');
+                        } catch (error) {
+                            // 去掉控制台日志
+                        }
+                    });
+                }
+                
+                cardsDiv.appendChild(card);
+            });
+            
+            // 添加"查看更多"按钮
+            if (type === 'product' && hasMore) {
+                const moreBtn = document.createElement('button');
+                moreBtn.className = 'suggestion-btn';
+                moreBtn.textContent = '查看更多理财产品';
+                
+                // 从现有卡片数量推断当前页码
+                const currentProductsCount = document.querySelectorAll('.card.product-card').length;
+                const currentPage = Math.floor(currentProductsCount / 3);
+                
+                moreBtn.addEventListener('click', async () => {
+                    try {
+                        // 获取用户原始请求的关键字
+                        const lastUserMessage = document.querySelector('.user-message:last-of-type');
+                        const originalMessage = lastUserMessage ? lastUserMessage.textContent : '';
+                        
+                        // 发送带有页码信息和原始关键字的请求
+                        const response = await fetch(`${API_URL}/message`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                username: 'test',
+                                message: `查看更多${currentPage+1}理财产品 ${originalMessage}`
+                            })
+                        });
+                        const data = await response.json();
+                        addMessage(data.message, 'bot');
+                        if (data.products) {
+                            showCards(data.products, 'product', data.has_more_products);
+                        }
+                    } catch (error) {
+                        // 去掉控制台日志
+                    }
+                });
+                cardsDiv.appendChild(moreBtn);
+            }
+            
+            chatArea.appendChild(cardsDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+    </script>
+</body>
+</html>

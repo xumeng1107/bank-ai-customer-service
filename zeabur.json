@@ -1,0 +1,11 @@
+{
+  "name": "bank-chatbot",
+  "version": "1.0.0",
+  "description": "银行智能客服系统",
+  "scripts": {
+    "start": "uvicorn main:app --host 0.0.0.0 --port 8080"
+  },
+  "dependencies": {
+    "python": "3.10"
+  }
+}
