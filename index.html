@@ -328,7 +328,24 @@
     </div>
 
     <script>
-        const API_URL = 'http://127.0.0.1:8000';
+        // 根据部署环境自动设置API URL
+        // 在开发环境(本地)中，我们使用本地API
+        // 在生产环境中，我们需要使用与后端相同的域名
+        let API_URL;
+        
+        // 检查是否在开发环境中（通过检查URL或host）
+        const isLocalDev = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1' || 
+                          window.location.hostname.startsWith('192.168.');
+        
+        if (isLocalDev) {
+            // 本地开发环境
+            API_URL = 'http://127.0.0.1:8000';
+        } else {
+            // 生产环境，使用当前域名作为API的基础
+            API_URL = window.location.origin;
+        }
+        
         let isLoggedIn = false;
         
         // 登录功能

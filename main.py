@@ -33,9 +33,17 @@ app = FastAPI(
 
 
 # 添加CORS中间件
+# 在生产环境中，应该使用具体的前端域名而不是通配符
+# 为了灵活部署，我们允许使用环境变量FRONTEND_URL指定允许的来源
+# 如果没有设置，则允许所有来源（仅用于开发或测试）
+import os
+
+frontend_url = os.environ.get("FRONTEND_URL", "*")
+allow_origins = [frontend_url] if frontend_url != "*" else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许所有来源，生产环境建议指定具体域名
+    allow_origins=allow_origins,  # 允许所有来源或指定的前端URL
     allow_credentials=True,
     allow_methods=["*"],  # 允许所有HTTP方法
     allow_headers=["*"],  # 允许所有HTTP头
@@ -44,7 +52,7 @@ app.add_middleware(
 
 # 初始化模拟数据
 @app.on_event("startup")
-def init_db():
+async def init_db():
     # 首先创建数据库表
     Base.metadata.create_all(bind=engine)
     

@@ -6,6 +6,13 @@
     "start": "uvicorn main:app --host 0.0.0.0 --port 8080"
   },
   "dependencies": {
-    "python": "3.10"
+    "python": "3.10",
+    "fastapi": "latest",
+    "uvicorn": "latest",
+    "sqlalchemy": "latest",
+    "pydantic": "latest",
+    "pydantic-settings": "latest",
+    "dashscope": "latest",
+    "python-multipart": "latest"
   }
 }
