@@ -65,17 +65,37 @@ def serve_frontend():
 @app.on_event("startup")
 async def init_db():
     # 首先创建数据库表
-    Base.metadata.create_all(bind=engine)
+    try:
+        # 确保数据库目录存在
+        import os
+        db_path = os.environ.get("DATABASE_PATH", "/tmp/bank.db")
+        if db_path.startswith("sqlite:///") and db_path.startswith("sqlite:///./"):
+            # 处理相对路径
+            actual_path = db_path.replace("sqlite:///", "")
+            db_dir = os.path.dirname(actual_path)
+            if db_dir and not os.path.exists(db_dir):
+                os.makedirs(db_dir, exist_ok=True)
+                print(f"创建数据库目录: {db_dir}")
+        
+        Base.metadata.create_all(bind=engine)
+        print("数据库表创建成功")
+        
+    except Exception as e:
+        print(f"创建数据库表失败: {e}")
+        raise e
     
     db = next(get_db())
     
     # 检查是否已有数据
     try:
         if db.query(User).count() > 0:
+            print("数据库已存在数据，跳过初始化")
             return
     except Exception:
         # 如果表不存在，会抛出异常，此时我们需要重新创建数据
-        pass
+        print("数据库为空，进行数据初始化")
+    
+    print("开始初始化模拟数据...")
     
     # 创建用户
     user = User(username="test", name="测试用户")
