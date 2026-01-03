@@ -28,9 +28,10 @@ Zeabur是一个专为开发者设计的云部署平台，提供了简单易用�
 
 ### 3. 配置部署设置
 
-1. 在"环境配置"部分，您可能需要设置以下环境变量：
-   - `DASHSCOPE_API_KEY`：您的DashScope API密钥
+1. 在"环境配置"部分，必须设置以下环境变量：
+   - `DASHSCOPE_API_KEY`：您的DashScope API密钥（必须设置，没有默认值）
    - `FRONTEND_URL`：前端应用访问URL（如果需要CORS配置）
+   - `DATABASE_PATH`：数据库路径（可选，默认使用SQLite）
 
 2. 在"资源限制"部分，配置适合的资源规格。
 
