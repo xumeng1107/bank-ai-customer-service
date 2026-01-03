@@ -138,6 +138,24 @@ async def init_db():
     db.commit()
 
 
+# 根路径路由 - 提供API信息和状态
+@app.get("/")
+def root():
+    return {
+        "name": "银行智能客服API",
+        "version": "1.0.0",
+        "description": "银行智能客服系统，基于通义千问大模型",
+        "status": "运行正常",
+        "endpoints": {
+            "用户登录": "POST /login/{username}",
+            "发送消息": "POST /message",
+            "理财产品详情": "GET /products/{product_id}",
+            "网点详情": "GET /branches/{branch_id}",
+            "API文档": "GET /docs"
+        }
+    }
+
+
 # 用户登录
 @app.post("/login/{username}", response_model=UserResponse)
 def login(username: str, db: Session = Depends(get_db)):
